@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Buffet</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <h1>Gestão de Buffet</h1>
+            <span style="font-size: 0.85rem; opacity: 0.85;">Sistema Local</span>
+        </div>
+        <nav class="nav-menu">
+            <button class="nav-btn active" onclick="abrirSecao('agenda', this)">Agenda & Clientes</button>
+            <button class="nav-btn" onclick="abrirSecao('novo-cliente', this)">Novo Cliente</button>
+            <button class="nav-btn" onclick="abrirSecao('novo-evento', this)">Novo Evento / Orçamento</button>
+            <button class="nav-btn" onclick="abrirSecao('cardapio', this)">Cardápio & Pacotes</button>
+            <button class="nav-btn" onclick="abrirSecao('funcionarios', this)">Funcionários</button>
+            <button class="nav-btn" onclick="abrirSecao('financeiro', this)">Lançamentos Financeiros</button>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div id="toast" class="mensagem-toast"></div>
+
+        <!-- 1. AGENDA & VISÃO GERAL DE CLIENTES -->
+        <section id="sec-agenda" class="secao ativa">
+            <div class="card">
+                <h2>Agenda de Eventos — Filtros por Dia e Cliente</h2>
+                <div class="filtros-box">
+                    <div>
+                        <label>Filtrar por Dia (Data do Evento)</label>
+                        <input type="date" id="filtroData" onchange="aplicarFiltrosAgenda()">
+                    </div>
+                    <div>
+                        <label>Filtrar por Cliente</label>
+                        <select id="filtroCliente" onchange="aplicarFiltrosAgenda()">
+                            <option value="">Todos os clientes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="button" class="btn-secundario" onclick="limparFiltrosAgenda()">Limpar Filtros</button>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data / Hora</th>
+                            <th>Evento</th>
+                            <th>Cliente</th>
+                            <th>Convidados</th>
+                            <th>Valor Total</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaEventos"></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>Visão Geral de Clientes Cadastrados</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>CPF</th>
+                            <th>Telefone / WhatsApp</th>
+                            <th>Endereço</th>
+                            <th>E-mail</th>
+                            <th>Eventos</th>
+                            <th>Observações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaClientesGeral"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 2. NOVO CLIENTE -->
+        <section id="sec-novo-cliente" class="secao">
+            <div class="card" style="max-width: 720px; margin: 0 auto;">
+                <h2>Novo Cliente</h2>
+                <form id="formCliente">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nome Completo *</label>
+                            <input type="text" id="cliNome" required placeholder="Ex: Lívia Martins Carvalho">
+                        </div>
+                        <div class="form-group">
+                            <label>CPF</label>
+                            <input type="text" id="cliCpf" placeholder="000.000.000-00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Telefone / WhatsApp</label>
+                            <input type="text" id="cliTelefone" placeholder="(85) 9.9733-2581">
+                        </div>
+                        <div class="form-group">
+                            <label>E-mail</label>
+                            <input type="email" id="cliEmail" placeholder="cliente@email.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Endereço</label>
+                        <input type="text" id="cliEndereco" placeholder="Rua, número, bairro, cidade">
+                    </div>
+                    <div class="form-group">
+                        <label>Observações</label>
+                        <textarea id="cliObs" rows="2" placeholder="Indicação, preferências..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primario">Salvar Cliente</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 3. NOVO EVENTO / ORÇAMENTO -->
+        <section id="sec-novo-evento" class="secao">
+            <div class="card" style="max-width: 860px; margin: 0 auto;">
+                <h2>Novo Evento / Orçamento</h2>
+                <form id="formEvento">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cliente *</label>
+                            <select id="evCliente" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pacote (Define o formato e os campos do cardápio) *</label>
+                            <select id="evPacoteSelect" onchange="aplicarPacoteSelecionado()">
+                                <option value="">-- Escolha um pacote --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Título do Evento *</label>
+                            <input type="text" id="evTitulo" required placeholder="Ex: Maria’s Buffet / Evento">
+                        </div>
+                        <div class="form-group">
+                            <label>Nome do Pacote (ou digite avulso)</label>
+                            <input type="text" id="evPacote" placeholder="Ex: ÁSTER ou PETISCOS" oninput="atualizarVisibilidadeSecoes()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Paleta de Cores</label>
+                        <input type="text" id="evPaleta" placeholder="Ex: Amarelo Manteiga ou Fundo do Mar (Azul)">
+                    </div>
+
+                    <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+                        <div class="form-group">
+                            <label>Data *</label>
+                            <input type="date" id="evData" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Horário de Início *</label>
+                            <input type="time" id="evHorario" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Horário do Profissional</label>
+                            <input type="time" id="evHorarioProf">
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                        <div class="form-group">
+                            <label>Qtd. Convidados *</label>
+                            <input type="number" id="evConvidados" value="50" min="1" required oninput="calcularTotal()">
+                        </div>
+                        <div class="form-group">
+                            <label>Valor por Pessoa (R$) *</label>
+                            <input type="number" id="evValorPessoa" value="85.00" step="0.01" required oninput="calcularTotal()">
+                        </div>
+                        <div class="form-group">
+                            <label>Adicionais / Extras (R$)</label>
+                            <input type="number" id="evExtras" value="0.00" step="0.01" oninput="calcularTotal()">
+                        </div>
+                        <div class="form-group">
+                            <label>Status Inicial</label>
+                            <select id="evStatus">
+                                <option value="Orçamento">Orçamento</option>
+                                <option value="Confirmado">Confirmado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Campos dinâmicos do cardápio conforme o pacote -->
+                    <div id="grupoEntradas" class="form-group">
+                        <label>Entradas</label>
+                        <textarea id="evEntradas" rows="3" placeholder="Itens de entradas do pacote..."></textarea>
+                    </div>
+
+                    <div id="grupoPrincipal" class="form-group">
+                        <label>Principal</label>
+                        <textarea id="evPrincipal" rows="4" placeholder="Pratos principais / petiscos do pacote..."></textarea>
+                    </div>
+
+                    <div id="grupoFingerFood" class="form-group">
+                        <label>Finger Food</label>
+                        <textarea id="evFingerFood" rows="2" placeholder="Itens de finger food do pacote..."></textarea>
+                    </div>
+
+                    <div id="grupoBebidas" class="form-group">
+                        <label>Bebidas</label>
+                        <textarea id="evBebidas" rows="2" placeholder="Bebidas do pacote..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Equipe / Profissionais</label>
+                            <textarea id="evProfissionais" rows="3" placeholder="Ex: @Usuário - fritagem e montagem"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Observação (um item por linha)</label>
+                            <textarea id="evObs" rows="3" placeholder="Ex: Levar toalha de mesa branca."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="resumo-box" id="previewTotal">Total Estimado: R$ 4.250,00</div>
+                    <button type="submit" class="btn-primario">Registrar Evento</button>
+                </form>
+            </div>
+        </section>
+
+<!-- 4. CARDÁPIO GERAL & PACOTES -->
+        <section id="sec-cardapio" class="secao">
+            <div class="grid-2">
+                <!-- COLUNA ESQUERDA: CARDÁPIO GERAL -->
+                <div>
+                    <div class="card">
+                        <h2>1. Cardápio Geral (Cadastrar Itens)</h2>
+                        <form id="formCardapioItem">
+                            <div class="form-group">
+                                <label>Nome do Item *</label>
+                                <input type="text" id="itemNome" required placeholder="Ex: Lagarto ao molho de vinho, Dadinho de Tapioca...">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Categoria / Seção *</label>
+                                    <select id="itemCategoria" required>
+                                        <option value="Entradas">Entradas</option>
+                                        <option value="Principal">Principal</option>
+                                        <option value="Finger Food">Finger Food</option>
+                                        <option value="Bebidas">Bebidas</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Detalhe / Observação do Item</label>
+                                    <input type="text" id="itemDetalhe" placeholder="Ex: 15 un/pessoa, à vontade...">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primario">Adicionar ao Cardápio Geral</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Produtos Cadastrados (Catálogo Geral)</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Categoria</th>
+                                    <th>Detalhe</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaCardapioItens"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- COLUNA DIREITA: PACOTES -->
+                <div>
+                    <div class="card">
+                        <h2>2. Criar Pacote (Campos e Itens)</h2>
+                        <form id="formPacote">
+                            <div class="form-group">
+                                <label>Nome do Pacote *</label>
+                                <input type="text" id="pacNome" required placeholder="Ex: ÁSTER ou PETISCOS">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Campos / Seções que este Pacote utiliza:</label>
+                                <div style="display:flex; gap:14px; flex-wrap:wrap; background:#f8fafc; padding:10px; border:1px solid #ccd6dd; border-radius:6px; margin-bottom:8px;">
+                                    <label class="check-item" style="margin:0; border:none; padding:0;">
+                                        <input type="checkbox" class="pac-secao-check" value="Entradas" checked> Entradas
+                                    </label>
+                                    <label class="check-item" style="margin:0; border:none; padding:0;">
+                                        <input type="checkbox" class="pac-secao-check" value="Principal" checked> Principal
+                                    </label>
+                                    <label class="check-item" style="margin:0; border:none; padding:0;">
+                                        <input type="checkbox" class="pac-secao-check" value="Finger Food"> Finger Food
+                                    </label>
+                                    <label class="check-item" style="margin:0; border:none; padding:0;">
+                                        <input type="checkbox" class="pac-secao-check" value="Bebidas" checked> Bebidas
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Selecione os Itens do Cardápio Geral:</label>
+                                <div id="checklistItensPacote" class="checklist-cardapio">
+                                    <small style="color:#64748b;">Cadastre itens no Cardápio Geral ao lado para selecionar aqui.</small>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primario">Salvar Pacote</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Pacotes Cadastrados</h2>
+                        <div id="listaPacotes"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. FUNCIONÁRIOS -->
+        <section id="sec-funcionarios" class="secao">
+            <div class="card" style="max-width: 780px; margin: 0 auto 20px auto;">
+                <h2>Cadastro de Funcionário</h2>
+                <form id="formFuncionario">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nome Completo *</label>
+                            <input type="text" id="funcNome" required placeholder="Nome completo do funcionário">
+                        </div>
+                        <div class="form-group">
+                            <label>CPF</label>
+                            <input type="text" id="funcCpf" placeholder="000.000.000-00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Telefone</label>
+                            <input type="text" id="funcTelefone" placeholder="(85) 99999-9999">
+                        </div>
+                        <div class="form-group">
+                            <label>Chave PIX</label>
+                            <input type="text" id="funcPix" placeholder="CPF, telefone, e-mail ou chave aleatória">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Endereço</label>
+                        <input type="text" id="funcEndereco" placeholder="Rua, número, bairro, cidade">
+                    </div>
+                    <button type="submit" class="btn-primario">Salvar Funcionário</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Funcionários Cadastrados</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome Completo</th>
+                            <th>CPF</th>
+                            <th>Telefone</th>
+                            <th>Endereço</th>
+                            <th>Chave PIX</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaFuncionarios"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 6. LANÇAMENTOS FINANCEIROS -->
+        <section id="sec-financeiro" class="secao">
+            <div class="grid-3">
+                <div class="kpi-card entrada">
+                    <div class="kpi-titulo">Total de Entradas</div>
+                    <div class="kpi-valor" id="kpiEntradas">R$ 0,00</div>
+                </div>
+                <div class="kpi-card compra">
+                    <div class="kpi-titulo">Custos de Compras</div>
+                    <div class="kpi-valor" id="kpiCompras">R$ 0,00</div>
+                </div>
+                <div class="kpi-card funcionario">
+                    <div class="kpi-titulo">Pagamento de Funcionários</div>
+                    <div class="kpi-valor" id="kpiFuncionarios">R$ 0,00</div>
+                </div>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <h2 style="color: #059669;">1. Entradas</h2>
+                    <form onsubmit="lancarFinanceiro(event, 'Entrada')">
+                        <div class="form-group">
+                            <label>Evento *</label>
+                            <select class="fin-evento" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição *</label>
+                            <input type="text" class="fin-desc" required placeholder="Ex: Sinal 50%, 2ª parcela...">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Valor (R$) *</label>
+                                <input type="number" class="fin-valor" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select class="fin-status">
+                                    <option value="Pago">Recebido / Pago</option>
+                                    <option value="Pendente">Pendente</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primario" style="background-color: #059669;">Salvar Entrada</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2 style="color: #d97706;">2. Custos de Compras</h2>
+                    <form onsubmit="lancarFinanceiro(event, 'Compra')">
+                        <div class="form-group">
+                            <label>Evento *</label>
+                            <select class="fin-evento" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição *</label>
+                            <input type="text" class="fin-desc" required placeholder="Ex: Carnes, bebidas, descartáveis...">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Valor (R$) *</label>
+                                <input type="number" class="fin-valor" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select class="fin-status">
+                                    <option value="Pago">Pago</option>
+                                    <option value="Pendente">Pendente</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primario" style="background-color: #d97706;">Salvar Compra</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2 style="color: #dc2626;">3. Pagamento de Funcionários</h2>
+                    <form onsubmit="lancarFinanceiro(event, 'Funcionário')">
+                        <div class="form-group">
+                            <label>Evento *</label>
+                            <select class="fin-evento" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição *</label>
+                            <input type="text" class="fin-desc" required placeholder="Ex: Garçons, cozinha, bartender...">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Valor (R$) *</label>
+                                <input type="number" class="fin-valor" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select class="fin-status">
+                                    <option value="Pago">Pago</option>
+                                    <option value="Pendente">Pendente</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primario" style="background-color: #dc2626;">Salvar Pagamento</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Extrato de Lançamentos Financeiros</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Categoria</th>
+                            <th>Descrição</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaFinanceiro"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODAL MENSAGEM WHATSAPP -->
+    <div id="modalWpp" class="modal-overlay" onclick="fecharModalWpp(event)">
+        <div class="modal-box">
+            <h2 style="margin-top:0; color:#1b365d;">Mensagem Pronta para WhatsApp</h2>
+            <textarea id="textoWpp"></textarea>
+            <div class="modal-acoes">
+                <button type="button" class="btn-secundario" onclick="fecharModalWpp()">Fechar</button>
+                <button type="button" class="btn-wpp" style="width:auto; padding:9px 16px; margin-top:0;" onclick="copiarTextoWpp()">Copiar Mensagem</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let todosClientes = [];
+        let todosEventos = [];
+        let todosFuncionarios = [];
+        let itensCardapio = [];
+        let todosPacotes = [];
+
+        function formatarMoeda(valor) {
+            return (parseFloat(valor) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function formatarHoraCurta(horaStr) {
+            if (!horaStr) return '';
+            const [h, m] = horaStr.split(':');
+            if (!h) return horaStr;
+            const hNum = parseInt(h, 10);
+            if (!m || m === '00') return `${hNum}h`;
+            return `${hNum}h${m}`;
+        }
+
+        function formatarDataBr(dataIso) {
+            if (!dataIso) return '';
+            const partes = dataIso.split('-');
+            if (partes.length !== 3) return dataIso;
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+
+        function mostrarToast(msg) {
+            const el = document.getElementById('toast');
+            el.innerText = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3500);
+        }
+
+        function abrirSecao(nomeSecao, botaoClicado) {
+            document.querySelectorAll('.secao').forEach(s => s.classList.remove('ativa'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(`sec-${nomeSecao}`).classList.add('ativa');
+            if (botaoClicado) botaoClicado.classList.add('active');
+        }
+
+        function calcularTotal() {
+            const qtd = parseFloat(document.getElementById('evConvidados').value) || 0;
+            const unit = parseFloat(document.getElementById('evValorPessoa').value) || 0;
+            const extras = parseFloat(document.getElementById('evExtras').value) || 0;
+            const total = (qtd * unit) + extras;
+            document.getElementById('previewTotal').innerText = `Total Estimado: ${formatarMoeda(total)}`;
+        }
+
+        function formatarLinhaItem(item) {
+            return item.detalhe ? `${item.nome} (${item.detalhe})` : item.nome;
+        }
+
+        function atualizarVisibilidadeSecoes(secoesAtivas = null) {
+            const mapaGrupos = {
+                'Entradas': 'grupoEntradas',
+                'Principal': 'grupoPrincipal',
+                'Finger Food': 'grupoFingerFood',
+                'Bebidas': 'grupoBebidas'
+            };
+
+            if (!secoesAtivas || !secoesAtivas.length) {
+                Object.values(mapaGrupos).forEach(id => {
+                    document.getElementById(id).style.display = 'block';
+                });
+                return;
+            }
+
+            const setSecoes = new Set(secoesAtivas);
+            Object.entries(mapaGrupos).forEach(([nomeSecao, idGrupo]) => {
+                const visivel = setSecoes.has(nomeSecao);
+                document.getElementById(idGrupo).style.display = visivel ? 'block' : 'none';
+                if (!visivel) {
+                    const mapaInputs = {
+                        'Entradas': 'evEntradas',
+                        'Principal': 'evPrincipal',
+                        'Finger Food': 'evFingerFood',
+                        'Bebidas': 'evBebidas'
+                    };
+                    document.getElementById(mapaInputs[nomeSecao]).value = '';
+                }
+            });
+        }
+
+        function aplicarPacoteSelecionado() {
+            const pacoteId = document.getElementById('evPacoteSelect').value;
+            if (!pacoteId) {
+                atualizarVisibilidadeSecoes(null);
+                return;
+            }
+
+            const pacote = todosPacotes.find(p => String(p.id) === String(pacoteId));
+            if (!pacote) return;
+
+            document.getElementById('evPacote').value = pacote.nome;
+            const secoes = pacote.secoes && pacote.secoes.length
+                ? pacote.secoes
+                : ['Entradas', 'Principal', 'Finger Food', 'Bebidas'];
+
+            atualizarVisibilidadeSecoes(secoes);
+
+            const porSecao = {
+                entradas: [],
+                principal: [],
+                finger: [],
+                bebidas: []
+            };
+
+            (pacote.itens || []).forEach(item => {
+                const textoItem = formatarLinhaItem(item);
+                const cat = (item.categoria || '').toLowerCase();
+                if (cat.includes('entrada')) porSecao.entradas.push(textoItem);
+                else if (cat.includes('principal')) porSecao.principal.push(textoItem);
+                else if (cat.includes('finger')) porSecao.finger.push(textoItem);
+                else if (cat.includes('bebida')) porSecao.bebidas.push(textoItem);
+            });
+
+            document.getElementById('evEntradas').value = porSecao.entradas.join('\n');
+            document.getElementById('evPrincipal').value = porSecao.principal.join('\n');
+            document.getElementById('evFingerFood').value = porSecao.finger.join('\n');
+            document.getElementById('evBebidas').value = porSecao.bebidas.join('\n');
+
+            mostrarToast(`Pacote "${pacote.nome}" aplicado com seus campos e itens!`);
+        }
+
+        function renderizarCardapioEPacotes() {
+            const tbodyItens = document.getElementById('tabelaCardapioItens');
+            const checklist = document.getElementById('checklistItensPacote');
+
+            if (!itensCardapio.length) {
+                tbodyItens.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Nenhum item cadastrado no cardápio geral.</td></tr>';
+                checklist.innerHTML = '<small style="color:#64748b;">Cadastre itens no Cardápio Geral ao lado para selecionar aqui.</small>';
+            } else {
+                tbodyItens.innerHTML = itensCardapio.map(i => `
+                    <tr>
+                        <td><strong>${i.nome}</strong></td>
+                        <td><span class="badge status-Confirmado">${i.categoria}</span></td>
+                        <td>${i.detalhe || '-'}</td>
+                        <td><button class="btn-excluir" onclick="excluirCardapioItem(${i.id})">Excluir</button></td>
+                    </tr>
+                `).join('');
+
+                checklist.innerHTML = itensCardapio.map(i => `
+                    <label class="check-item">
+                        <input type="checkbox" class="pac-item-check" value="${i.id}">
+                        <span><strong>${i.nome}</strong> <small style="color:#64748b;">(${i.categoria}${i.detalhe ? ' • ' + i.detalhe : ''})</small></span>
+                    </label>
+                `).join('');
+            }
+
+            const divPacotes = document.getElementById('listaPacotes');
+            if (!todosPacotes.length) {
+                divPacotes.innerHTML = '<p style="color:#64748b;">Nenhum pacote criado ainda.</p>';
+            } else {
+                divPacotes.innerHTML = todosPacotes.map(p => {
+                    const secoesBadge = (p.secoes || []).map(s => `<span class="badge status-Orçamento" style="margin-left:4px;">${s}</span>`).join('');
+                    const itensHtml = (p.itens || []).length
+                        ? `<ul style="margin:6px 0 0 18px; padding:0; font-size:0.88rem;">${p.itens.map(it => `<li><strong>[${it.categoria}]</strong> ${formatarLinhaItem(it)}</li>`).join('')}</ul>`
+                        : '<small style="color:#64748b;">Sem itens vinculados.</small>';
+                    return `
+                        <div class="pacote-card">
+                            <div class="pacote-header">
+                                <div>
+                                    <strong>${p.nome}</strong>
+                                    ${secoesBadge}
+                                </div>
+                                <button class="btn-excluir" onclick="excluirPacote(${p.id})">Excluir</button>
+                            </div>
+                            ${itensHtml}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const selPacoteEv = document.getElementById('evPacoteSelect');
+            const atual = selPacoteEv.value;
+            selPacoteEv.innerHTML = '<option value="">-- Escolha um pacote --</option>' +
+                todosPacotes.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+            selPacoteEv.value = atual;
+        }
+
+        function montarMensagemWhatsApp(ev) {
+            const linhas = [];
+            linhas.push((ev.titulo || 'EVENTO').toUpperCase());
+            linhas.push('');
+            linhas.push(`CLIENTE: ${(ev.cliente_nome || '').toUpperCase()}.`);
+            if (ev.cliente_cpf) linhas.push(`CPF: ${ev.cliente_cpf}.`);
+            linhas.push(`DATA: ${formatarDataBr(ev.data_evento)}.`);
+            linhas.push(`HORÁRIO DE INÍCIO: ${formatarHoraCurta(ev.horario)}.`);
+            if (ev.horario_profissional) {
+                linhas.push(`HORÁRIO DO PROFISSIONAL: ${formatarHoraCurta(ev.horario_profissional)}.`);
+            }
+            linhas.push(`QUANTIDADE DE CONVIDADOS: ${ev.qtd_convidados}.`);
+            if (ev.cliente_endereco) {
+                linhas.push(`ENDEREÇO: ${ev.cliente_endereco.toUpperCase()}.`);
+            }
+            if (ev.cliente_telefone) {
+                linhas.push(`TELEFONE: ${ev.cliente_telefone}.`);
+            }
+
+            if (ev.paleta_cores) {
+                linhas.push('');
+                linhas.push(`PALETA DE CORES: ${ev.paleta_cores.toUpperCase()}.`);
+            }
+
+            if (ev.cardapio_obs) {
+                linhas.push('');
+                linhas.push('OBSERVAÇÃO:');
+                ev.cardapio_obs.split('\n').map(l => l.trim()).filter(Boolean).forEach(item => {
+                    const limpo = item.replace(/^[-•]\s*/, '');
+                    linhas.push(`- ${limpo}`);
+                });
+            }
+
+            if (ev.pacote) {
+                linhas.push('');
+                linhas.push(`PACOTE: ${ev.pacote.toUpperCase()}.`);
+            }
+
+            if (ev.entradas) {
+                linhas.push('ENTRADAS:');
+                ev.entradas.split('\n').map(l => l.trim()).filter(Boolean).forEach(item => {
+                    const limpo = item.replace(/^[-•]\s*/, '');
+                    linhas.push(`- ${limpo}`);
+                });
+            }
+
+            if (ev.principal) {
+                linhas.push('');
+                linhas.push('PRINCIPAL:');
+                ev.principal.split('\n').map(l => l.trim()).filter(Boolean).forEach(item => {
+                    const limpo = item.replace(/^[-•]\s*/, '');
+                    linhas.push(`- ${limpo}`);
+                });
+            }
+
+            if (ev.finger_food) {
+                linhas.push('');
+                linhas.push('FINGER FOOD:');
+                ev.finger_food.split('\n').map(l => l.trim()).filter(Boolean).forEach(item => {
+                    const limpo = item.replace(/^[-•]\s*/, '');
+                    linhas.push(`- ${limpo}`);
+                });
+            }
+
+            if (ev.bebidas) {
+                linhas.push('');
+                linhas.push('BEBIDAS:');
+                ev.bebidas.split('\n').map(l => l.trim()).filter(Boolean).forEach(item => {
+                    const limpo = item.replace(/^[-•]\s*/, '');
+                    linhas.push(`- ${limpo}`);
+                });
+            }
+
+            if (ev.profissionais) {
+                linhas.push('');
+                linhas.push('Profissionais :');
+                ev.profissionais.split('\n').map(l => l.trim()).filter(Boolean).forEach(item => {
+                    linhas.push(`${item}`);
+                });
+            }
+
+            return linhas.join('\n');
+        }
+
+        async function abrirWhatsAppEvento(eventoId) {
+            const ev = todosEventos.find(item => item.id === eventoId);
+            if (!ev) return;
+
+            const texto = montarMensagemWhatsApp(ev);
+            document.getElementById('textoWpp').value = texto;
+            document.getElementById('modalWpp').classList.add('aberto');
+
+            try {
+                await navigator.clipboard.writeText(texto);
+                mostrarToast('Mensagem gerada e copiada para a área de transferência!');
+            } catch (_) {
+                mostrarToast('Mensagem gerada! Clique em "Copiar Mensagem" se necessário.');
+            }
+        }
+
+        async function copiarTextoWpp() {
+            const texto = document.getElementById('textoWpp').value;
+            try {
+                await navigator.clipboard.writeText(texto);
+                mostrarToast('Mensagem copiada!');
+            } catch (_) {
+                const ta = document.getElementById('textoWpp');
+                ta.select();
+                document.execCommand('copy');
+                mostrarToast('Mensagem copiada!');
+            }
+        }
+
+        function fecharModalWpp(event) {
+            if (!event || event.target.id === 'modalWpp') {
+                document.getElementById('modalWpp').classList.remove('aberto');
+            }
+        }
+
+        function renderizarEventos(lista) {
+            const tbodyEv = document.getElementById('tabelaEventos');
+            if (!lista.length) {
+                tbodyEv.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b;">Nenhum evento encontrado com os filtros atuais.</td></tr>';
+                return;
+            }
+
+            tbodyEv.innerHTML = lista.map(e => `
+                <tr>
+                    <td><strong>${formatarDataBr(e.data_evento)}</strong><br><small>Início: ${e.horario}${e.horario_profissional ? ' | Prof: ' + e.horario_profissional : ''}</small></td>
+                    <td><strong>${e.titulo}</strong><br><small>Pacote: ${e.pacote || e.tipo_evento || '-'}</small></td>
+                    <td>${e.cliente_nome}<br><small>${e.cliente_telefone || ''}</small></td>
+                    <td>${e.qtd_convidados} pax</td>
+                    <td><strong>${formatarMoeda(e.valor_total)}</strong></td>
+                    <td><span class="badge status-${e.status}">${e.status}</span></td>
+                    <td style="min-width:130px;">
+                        <select onchange="mudarStatus(${e.id}, this.value)" style="padding:4px; font-size:0.8rem;">
+                            <option value="Orçamento" ${e.status==='Orçamento'?'selected':''}>Orçamento</option>
+                            <option value="Confirmado" ${e.status==='Confirmado'?'selected':''}>Confirmado</option>
+                            <option value="Concluído" ${e.status==='Concluído'?'selected':''}>Concluído</option>
+                            <option value="Cancelado" ${e.status==='Cancelado'?'selected':''}>Cancelado</option>
+                        </select>
+                        <button type="button" class="btn-wpp" onclick="abrirWhatsAppEvento(${e.id})">Gerar WhatsApp</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function aplicarFiltrosAgenda() {
+            const dia = document.getElementById('filtroData').value;
+            const cliId = document.getElementById('filtroCliente').value;
+
+            const filtrados = todosEventos.filter(ev => {
+                const bateDia = !dia || ev.data_evento === dia;
+                const bateCli = !cliId || String(ev.cliente_id) === String(cliId);
+                return bateDia && bateCli;
+            });
+
+            renderizarEventos(filtrados);
+        }
+
+        function limparFiltrosAgenda() {
+            document.getElementById('filtroData').value = '';
+            document.getElementById('filtroCliente').value = '';
+            renderizarEventos(todosEventos);
+        }
+
+        function renderizarVisaoClientes() {
+            const tbodyCli = document.getElementById('tabelaClientesGeral');
+            if (!todosClientes.length) {
+                tbodyCli.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b;">Nenhum cliente cadastrado ainda.</td></tr>';
+                return;
+            }
+
+            tbodyCli.innerHTML = todosClientes.map(c => {
+                const qtdEventos = todosEventos.filter(e => e.cliente_id === c.id).length;
+                return `
+                    <tr>
+                        <td><strong>${c.nome}</strong></td>
+                        <td>${c.cpf || '-'}</td>
+                        <td>${c.telefone || '-'}</td>
+                        <td>${c.endereco || '-'}</td>
+                        <td>${c.email || '-'}</td>
+                        <td><span class="badge status-Confirmado">${qtdEventos} evento(s)</span></td>
+                        <td>${c.observacoes || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderizarFuncionarios() {
+            const tbodyFunc = document.getElementById('tabelaFuncionarios');
+            if (!todosFuncionarios.length) {
+                tbodyFunc.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhum funcionário cadastrado ainda.</td></tr>';
+                return;
+            }
+
+            tbodyFunc.innerHTML = todosFuncionarios.map(f => `
+                <tr>
+                    <td><strong>${f.nome}</strong></td>
+                    <td>${f.cpf || '-'}</td>
+                    <td>${f.telefone || '-'}</td>
+                    <td>${f.endereco || '-'}</td>
+                    <td><strong>${f.chave_pix || '-'}</strong></td>
+                    <td><button class="btn-excluir" onclick="excluirFuncionario(${f.id})">Excluir</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function carregarDados() {
+            const [resCli, resEv, resFin, resFunc, resItens, resPac] = await Promise.all([
+                fetch('/api/clientes'),
+                fetch('/api/eventos'),
+                fetch('/api/financeiro'),
+                fetch('/api/funcionarios'),
+                fetch('/api/cardapio-itens'),
+                fetch('/api/pacotes')
+            ]);
+
+            todosClientes = await resCli.json();
+            todosEventos = await resEv.json();
+            const financeiro = await resFin.json();
+            todosFuncionarios = await resFunc.json();
+            itensCardapio = await resItens.json();
+            todosPacotes = await resPac.json();
+
+            const selCli = document.getElementById('evCliente');
+            selCli.innerHTML = todosClientes.length
+                ? todosClientes.map(c => `<option value="${c.id}">${c.nome} (${c.telefone || 'sem tel'})</option>`).join('')
+                : '<option value="">Cadastre um cliente primeiro</option>';
+
+            const filtroCli = document.getElementById('filtroCliente');
+            const valorFiltroAtual = filtroCli.value;
+            filtroCli.innerHTML = '<option value="">Todos os clientes</option>' +
+                todosClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+            filtroCli.value = valorFiltroAtual;
+
+            renderizarVisaoClientes();
+            aplicarFiltrosAgenda();
+            renderizarFuncionarios();
+            renderizarCardapioEPacotes();
+
+            const opcoesEventos = todosEventos.length
+                ? todosEventos.map(e => `<option value="${e.id}">${e.titulo} (${formatarDataBr(e.data_evento)})</option>`).join('')
+                : '<option value="">Nenhum evento cadastrado</option>';
+
+            document.querySelectorAll('.fin-evento').forEach(sel => {
+                sel.innerHTML = opcoesEventos;
+            });
+
+            let totalEntradas = 0;
+            let totalCompras = 0;
+            let totalFuncionarios = 0;
+
+            financeiro.forEach(f => {
+                const v = parseFloat(f.valor) || 0;
+                if (f.tipo === 'Entrada') totalEntradas += v;
+                else if (f.tipo === 'Compra') totalCompras += v;
+                else if (f.tipo === 'Funcionário') totalFuncionarios += v;
+            });
+
+            document.getElementById('kpiEntradas').innerText = formatarMoeda(totalEntradas);
+            document.getElementById('kpiCompras').innerText = formatarMoeda(totalCompras);
+            document.getElementById('kpiFuncionarios').innerText = formatarMoeda(totalFuncionarios);
+
+            const rotuloCategoria = {
+                'Entrada': { texto: 'Entrada (+)', cor: '#059669' },
+                'Compra': { texto: 'Custo de Compra (-)', cor: '#d97706' },
+                'Funcionário': { texto: 'Pagamento de Funcionário (-)', cor: '#dc2626' }
+            };
+
+            document.getElementById('tabelaFinanceiro').innerHTML = financeiro.map(f => {
+                const cat = rotuloCategoria[f.tipo] || { texto: f.tipo, cor: '#1e293b' };
+                return `
+                    <tr>
+                        <td>${f.evento_titulo}</td>
+                        <td style="color: ${cat.cor}; font-weight: 600;">${cat.texto}</td>
+                        <td>${f.descricao}</td>
+                        <td><strong>${formatarMoeda(f.valor)}</strong></td>
+                        <td>${f.status}</td>
+                        <td><button class="btn-excluir" onclick="excluirLancamento(${f.id})">Excluir</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('formCardapioItem').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch('/api/cardapio-itens', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nome: document.getElementById('itemNome').value,
+                    categoria: document.getElementById('itemCategoria').value,
+                    detalhe: document.getElementById('itemDetalhe').value
+                })
+            });
+            e.target.reset();
+            await carregarDados();
+            mostrarToast('Item adicionado ao cardápio geral!');
+        });
+
+        async function excluirCardapioItem(id) {
+            await fetch(`/api/cardapio-itens/${id}`, { method: 'DELETE' });
+            await carregarDados();
+            mostrarToast('Item removido do cardápio geral.');
+        }
+
+        document.getElementById('formPacote').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const secoesSelecionadas = Array.from(document.querySelectorAll('.pac-secao-check:checked')).map(cb => cb.value);
+            const itensSelecionados = Array.from(document.querySelectorAll('.pac-item-check:checked')).map(cb => parseInt(cb.value, 10));
+            const nomePacote = document.getElementById('pacNome').value;
+
+            await fetch('/api/pacotes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nome: nomePacote,
+                    tipo_evento: nomePacote,
+                    secoes: secoesSelecionadas,
+                    item_ids: itensSelecionados
+                })
+            });
+            e.target.reset();
+            await carregarDados();
+            mostrarToast('Pacote criado com sucesso!');
+        });
+
+        async function excluirPacote(id) {
+            await fetch(`/api/pacotes/${id}`, { method: 'DELETE' });
+            await carregarDados();
+            mostrarToast('Pacote removido.');
+        }
+
+        document.getElementById('formCliente').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch('/api/clientes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nome: document.getElementById('cliNome').value,
+                    cpf: document.getElementById('cliCpf').value,
+                    telefone: document.getElementById('cliTelefone').value,
+                    endereco: document.getElementById('cliEndereco').value,
+                    email: document.getElementById('cliEmail').value,
+                    observacoes: document.getElementById('cliObs').value
+                })
+            });
+            e.target.reset();
+            await carregarDados();
+            mostrarToast('Cliente salvo com sucesso!');
+        });
+
+        document.getElementById('formFuncionario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fetch('/api/funcionarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nome: document.getElementById('funcNome').value,
+                    cpf: document.getElementById('funcCpf').value,
+                    telefone: document.getElementById('funcTelefone').value,
+                    endereco: document.getElementById('funcEndereco').value,
+                    chave_pix: document.getElementById('funcPix').value
+                })
+            });
+            e.target.reset();
+            await carregarDados();
+            mostrarToast('Funcionário salvo com sucesso!');
+        });
+
+        async function excluirFuncionario(id) {
+            await fetch(`/api/funcionarios/${id}`, { method: 'DELETE' });
+            await carregarDados();
+            mostrarToast('Funcionário removido.');
+        }
+
+        document.getElementById('formEvento').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const clienteId = document.getElementById('evCliente').value;
+            if (!clienteId) { alert('Cadastre um cliente primeiro.'); return; }
+
+            const pacoteNome = document.getElementById('evPacote').value;
+
+            const res = await fetch('/api/eventos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cliente_id: parseInt(clienteId),
+                    titulo: document.getElementById('evTitulo').value,
+                    tipo_evento: pacoteNome,
+                    data_evento: document.getElementById('evData').value,
+                    horario: document.getElementById('evHorario').value,
+                    horario_profissional: document.getElementById('evHorarioProf').value,
+                    paleta_cores: document.getElementById('evPaleta').value,
+                    qtd_convidados: parseInt(document.getElementById('evConvidados').value),
+                    valor_por_pessoa: parseFloat(document.getElementById('evValorPessoa').value),
+                    valor_extras: parseFloat(document.getElementById('evExtras').value) || 0,
+                    status: document.getElementById('evStatus').value,
+                    pacote: pacoteNome,
+                    entradas: document.getElementById('evEntradas').value,
+                    principal: document.getElementById('evPrincipal').value,
+                    finger_food: document.getElementById('evFingerFood').value,
+                    bebidas: document.getElementById('evBebidas').value,
+                    profissionais: document.getElementById('evProfissionais').value,
+                    cardapio_obs: document.getElementById('evObs').value
+                })
+            });
+            const data = await res.json();
+            if (data.aviso) alert(data.aviso);
+            e.target.reset();
+            atualizarVisibilidadeSecoes(null);
+            calcularTotal();
+            await carregarDados();
+            mostrarToast('Evento / orçamento registrado com sucesso!');
+        });
+
+        async function lancarFinanceiro(event, tipo) {
+            event.preventDefault();
+            const form = event.target;
+            const eventoId = form.querySelector('.fin-evento').value;
+            if (!eventoId) { alert('Cadastre um evento primeiro.'); return; }
+
+            await fetch('/api/financeiro', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    evento_id: parseInt(eventoId),
+                    descricao: form.querySelector('.fin-desc').value,
+                    tipo: tipo,
+                    valor: parseFloat(form.querySelector('.fin-valor').value),
+                    status: form.querySelector('.fin-status').value
+                })
+            });
+            form.reset();
+            await carregarDados();
+            mostrarToast('Lançamento financeiro salvo!');
+        }
+
+        async function excluirLancamento(id) {
+            await fetch(`/api/financeiro/${id}`, { method: 'DELETE' });
+            await carregarDados();
+            mostrarToast('Lançamento removido.');
+        }
+
+        async function mudarStatus(id, novoStatus) {
+            await fetch(`/api/eventos/${id}/status?status=${novoStatus}`, { method: 'PATCH' });
+            await carregarDados();
+            mostrarToast('Status do evento atualizado!');
+        }
+
+        calcularTotal();
+        carregarDados();
+    </script>
+</body>
+</html>
